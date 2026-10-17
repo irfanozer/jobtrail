@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 @Entity
+@org.hibernate.annotations.DynamicUpdate
 @Table(name = "jobs")
 public class Job {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,8 +41,19 @@ public class Job {
     private boolean active;
     @Column(nullable = false, length = 64)
     private String contentHash;
+    @Column(nullable = false)
+    private int priorityScore;
+    @Column(nullable = false)
+    private boolean engineeringRole;
     public Job() {}
     public Long getId() { return id; }
+    public int getPriorityScore() { return priorityScore; }
+    public boolean getEngineeringRole() { return engineeringRole; }
+    @PrePersist @PreUpdate
+    private void updateRanking() {
+        engineeringRole = JobClassifier.engineeringRole(title);
+        priorityScore = JobClassifier.priority(this);
+    }
     public Long getSourceId() { return sourceId; }
     public void setSourceId(Long value) { this.sourceId = value; }
     public String getExternalId() { return externalId; }
