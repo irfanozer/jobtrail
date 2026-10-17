@@ -101,7 +101,7 @@ final class BoardAdapterSupport {
             URI uri = URI.create(value);
             if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null
                     || uri.getUserInfo() != null || uri.getPort() != -1 && uri.getPort() != 443
-                    || value.length() > 2_048) {
+                    || uri.toASCIIString().length() > 2_000) {
                 throw new IllegalArgumentException();
             }
             return uri.toASCIIString();
