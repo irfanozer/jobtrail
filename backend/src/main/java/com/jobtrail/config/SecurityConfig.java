@@ -16,7 +16,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
@@ -34,7 +35,7 @@ public class SecurityConfig {
         }
         String effectivePassword = enabled ? password : java.util.UUID.randomUUID().toString();
         return new InMemoryUserDetailsManager(User.withUsername(username)
-                .password(new BCryptPasswordEncoder().encode(effectivePassword)).roles("OWNER").build());
+                .password("{bcrypt}" + new BCryptPasswordEncoder().encode(effectivePassword)).roles("OWNER").build());
     }
 
     @Bean
@@ -50,10 +51,12 @@ public class SecurityConfig {
             .formLogin(form -> form.defaultSuccessUrl("/", true).permitAll())
             .logout(logout -> logout.logoutSuccessUrl("/login"))
             .exceptionHandling(errors -> errors.defaultAuthenticationEntryPointFor(
-                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED), new AntPathRequestMatcher("/api/**")))
+                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED), new AntPathRequestMatcher("/api/**"))
+                    .defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login"),
+                            new AntPathRequestMatcher("/**")))
             .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                     .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
-            .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
+            .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
         return http.build();
     }
 
