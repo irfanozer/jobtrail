@@ -19,9 +19,9 @@ public class SourceSeeder implements ApplicationRunner {
             {"Discord", "GREENHOUSE", "discord"}, {"Duolingo", "GREENHOUSE", "duolingo"},
             {"Figma", "GREENHOUSE", "figma"}, {"MongoDB", "GREENHOUSE", "mongodb"},
             {"Reddit", "GREENHOUSE", "reddit"}, {"Samsara", "GREENHOUSE", "samsara"},
-            {"Sentry", "GREENHOUSE", "sentry"}, {"Stripe", "GREENHOUSE", "stripe"},
+            {"Stripe", "GREENHOUSE", "stripe"},
             {"Twilio", "GREENHOUSE", "twilio"}, {"Vercel", "GREENHOUSE", "vercel"},
-            {"Palantir", "LEVER", "palantir"}, {"Plaid", "LEVER", "plaid"},
+            {"Palantir", "LEVER", "palantir"},
             {"Spotify", "LEVER", "spotify"}
         };
         for (String[] board : boards) {

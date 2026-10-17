@@ -100,5 +100,6 @@ The automated suite covers provider parsing/pagination, failed snapshot rollback
 - [Free hosting instructions](docs/deployment.md): Render Docker web service with an external persistent database; Railway considerations.
 - [Architecture and tradeoffs](docs/architecture.md)
 - [API reference](docs/api.md)
+- [Verification record](docs/verification.md)
 
 Run a single application instance. Public source code does not make personal career data public: the hosted app is an owner-only workspace. Use screenshots without profile details when sharing the project.
