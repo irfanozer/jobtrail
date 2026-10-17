@@ -1,0 +1,46 @@
+name: jobtrail
+
+services:
+  db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: jobtrail
+      POSTGRES_USER: ${DATABASE_USERNAME:-jobtrail}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  app:
+    image: jobtrail:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      SERVER_ADDRESS: 0.0.0.0
+      PORT: "8080"
+      JDBC_DATABASE_URL: ${JDBC_DATABASE_URL:-jdbc:postgresql://db:5432/jobtrail}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-jobtrail}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in .env}
+      JOBTRAIL_AUTH_ENABLED: ${JOBTRAIL_AUTH_ENABLED:-false}
+      JOBTRAIL_USERNAME: ${JOBTRAIL_USERNAME:-owner}
+      JOBTRAIL_PASSWORD: ${JOBTRAIL_PASSWORD:-}
+      JOBTRAIL_REFRESH_ON_STARTUP: ${JOBTRAIL_REFRESH_ON_STARTUP:-false}
+      JOBTRAIL_SCHEDULED_REFRESH: ${JOBTRAIL_SCHEDULED_REFRESH:-false}
+    mem_limit: 512m
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

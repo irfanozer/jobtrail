@@ -1,6 +1,13 @@
 jobtrail:
   security:
     enabled: true
+spring:
+  datasource:
+    url: ${JDBC_DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: 3
 server:
   forward-headers-strategy: framework
   servlet:
