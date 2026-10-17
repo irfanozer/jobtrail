@@ -9,10 +9,12 @@
 .idea/
 .vscode/
 *.iml
+*.tsbuildinfo
 *.log
 data/
 private/
 backups/
+reports/
 playwright-report/
 test-results/
 *.pdf
