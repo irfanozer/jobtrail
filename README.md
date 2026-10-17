@@ -2,6 +2,10 @@
 
 A reusable job-search workspace built with Java 21, Spring Boot, PostgreSQL, React, and TypeScript. Find real listings on official employer boards, compare them with your career facts, and keep your shortlist and application history in one place.
 
+Hosted app: [Open JobTrail](https://jobtrail-bwgi.onrender.com). Owner login is required.
+
+![JobTrail dashboard showing live employer listings](docs/images/dashboard.jpg)
+
 ## What works today
 
 - Live collection from Greenhouse and Lever public employer boards, with editable tracked sources.
@@ -29,13 +33,13 @@ For macOS/Linux, copy `.env.example` to `.env`, supply unique database and owner
 
 ## Use it again tomorrow
 
-1. Start Docker and run `scripts/start.ps1` if the app is stopped.
+1. Open the [hosted app](https://jobtrail-bwgi.onrender.com) and sign in. For a local workspace, start Docker and run `scripts/start.ps1` if the app is stopped.
 2. Open **Discover jobs** and select **Refresh boards** to fetch current postings.
 3. Search and filter; open a listing to read its description and match explanation.
 4. Save relevant roles. Follow the employer link to apply, then mark the role **Applied** yourself.
 5. Keep **Your profile** current as you gain experience. Add more employers under **Employer boards**.
 
-Sources, profiles, jobs, and statuses live in the `postgres_data` Docker volume. Filters live in your browser. Repeated refreshes update existing jobs; they do not reset your history. An unavailable board retains its previous jobs and displays an error. Closed postings remain accessible in your tracker.
+Hosted sources, profiles, jobs, and statuses live in the external PostgreSQL database. Local data lives in the `postgres_data` Docker volume; these are separate workspaces. Filters live in your browser. Repeated refreshes update existing jobs; they do not reset your history. An unavailable board retains its previous jobs and displays an error. Closed postings remain accessible in your tracker.
 
 ```powershell
 docker compose stop                  # Pause without deleting data
@@ -49,7 +53,7 @@ Do not remove the database volume if you want to keep your history. Back up befo
 
 No personal profile or resume is included in this repository. Enter real information in the profile editor. Facts have a source and a confirmation checkbox; unconfirmed claims are not used as evidence.
 
-An optional JSON import can be placed at `private/profile-import.json` and loaded with:
+For a local workspace, an optional JSON import can be placed at `private/profile-import.json` and loaded with:
 
 ```powershell
 .\scripts\import-profile.ps1

@@ -17,6 +17,8 @@ Use a **free Render web service** for the Docker image and a **free Neon Postgre
    | `DATABASE_PASSWORD` | Your database password |
    | `JOBTRAIL_PASSWORD` | A unique password with at least 16 characters |
 
+   Replace `YOUR_HOST` and `YOUR_DATABASE` with the actual values from Neon's Connect dialog. Keep database credentials in their separate variables; do not paste a `psql` command or a URL containing a password into `JDBC_DATABASE_URL`. An `UnknownHostException` naming a placeholder means that replacement was missed.
+
 4. Keep `SPRING_PROFILES_ACTIVE=deploy`, `JOBTRAIL_USERNAME=owner`, and the default scheduled-refresh settings. Never use the local profile for a public deployment.
 5. Wait for the container build and `/actuator/health` to become healthy. Open the service URL, sign in, and enter your profile privately. The database starts empty except for the tracked employer boards.
 6. Refresh boards and verify results. Restart/redeploy once and confirm the profile and tracking state remain available. Check database storage and compute usage periodically.
