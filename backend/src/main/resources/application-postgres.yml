@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: ${JDBC_DATABASE_URL:jdbc:postgresql://localhost:5432/jobtrail}
+    username: ${DATABASE_USERNAME:jobtrail}
+    password: ${DATABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: 5

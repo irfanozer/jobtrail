@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: jobtrail
+  profiles:
+    default: local
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: never
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+jobtrail:
+  security:
+    enabled: ${JOBTRAIL_AUTH_ENABLED:false}
+  collection:
+    startup: ${JOBTRAIL_REFRESH_ON_STARTUP:false}
+    scheduled: ${JOBTRAIL_SCHEDULED_REFRESH:false}
+    delay-ms: ${JOBTRAIL_REFRESH_DELAY_MS:21600000}
