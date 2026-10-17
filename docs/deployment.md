@@ -25,6 +25,8 @@ Use a **free Render web service** for the Docker image and a **free Neon Postgre
 
 The deploy profile requires authentication even if `JOBTRAIL_AUTH_ENABLED=false` is accidentally provided. It also requires explicit external database settings, so a deployment cannot silently store its data in a temporary local file. TLS session cookies require the host's HTTPS URL.
 
+The login page includes a temporary public demo by default. `JOBTRAIL_DEMO_ENABLED=false` disables it. Demo entry is available only when authentication is enabled; the local authentication-disabled workspace does not expose a demo sign-in. Demo profiles and tracking live only in the visitor's session, expire after 30 minutes of inactivity, and disappear on sign-out or service restart. They do not alter the owner's persistent data. No extra database, service, or paid resource is needed.
+
 Free Render web services sleep after inactivity and can take time to wake. Scheduled tasks cannot be relied on while the service sleeps. Manual refresh after opening the app is the dependable free-tier workflow. The JVM is configured for a small instance, but very large board sets can exceed free memory/storage allowances. Start with the included sources and expand gradually.
 
 Free-tier conditions can change. Review the current [Render free-service limits](https://render.com/docs/free) and [Neon pricing](https://neon.com/pricing) before creating resources. No uptime or unlimited usage is promised.

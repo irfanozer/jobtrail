@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -40,15 +41,26 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain security(HttpSecurity http,
-                                @Value("${jobtrail.security.enabled:false}") boolean enabled) throws Exception {
+                                @Value("${jobtrail.security.enabled:false}") boolean enabled,
+                                @Value("${jobtrail.demo.enabled:true}") boolean demoEnabled) throws Exception {
         if (!enabled) {
-            return http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+            return http.authorizeHttpRequests(auth -> auth.requestMatchers("/demo").denyAll().anyRequest().permitAll())
                     .csrf(csrf -> csrf.disable()).build();
         }
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/actuator/health", "/error").permitAll()
+                .requestMatchers("/actuator/health", "/error", "/login").permitAll()
+                .requestMatchers(HttpMethod.GET, "/demo").permitAll()
+                .requestMatchers(HttpMethod.POST, "/demo").access((authentication, context) ->
+                        new org.springframework.security.authorization.AuthorizationDecision(demoEnabled))
+                .requestMatchers(HttpMethod.GET, "/api/jobs", "/api/jobs/*", "/api/jobs/*/match",
+                        "/api/profile", "/api/sources", "/api/session").hasAnyRole("OWNER", "DEMO")
+                .requestMatchers(HttpMethod.PUT, "/api/profile").hasAnyRole("OWNER", "DEMO")
+                .requestMatchers(HttpMethod.PATCH, "/api/jobs/*/status").hasAnyRole("OWNER", "DEMO")
+                .requestMatchers("/api/**").hasRole("OWNER")
+                .requestMatchers("/actuator/**").hasRole("OWNER")
                 .anyRequest().authenticated())
-            .formLogin(form -> form.defaultSuccessUrl("/", true).permitAll())
+            .formLogin(form -> form.loginPage("/login").loginProcessingUrl("/login")
+                    .defaultSuccessUrl("/", true).permitAll())
             .logout(logout -> logout.logoutSuccessUrl("/login"))
             .exceptionHandling(errors -> errors.defaultAuthenticationEntryPointFor(
                     new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED), new AntPathRequestMatcher("/api/**"))

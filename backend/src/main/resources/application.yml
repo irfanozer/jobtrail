@@ -25,6 +25,8 @@ management:
 jobtrail:
   security:
     enabled: ${JOBTRAIL_AUTH_ENABLED:false}
+  demo:
+    enabled: ${JOBTRAIL_DEMO_ENABLED:true}
   collection:
     startup: ${JOBTRAIL_REFRESH_ON_STARTUP:false}
     scheduled: ${JOBTRAIL_SCHEDULED_REFRESH:false}

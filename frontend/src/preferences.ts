@@ -30,7 +30,8 @@ export function validatePreferences(input: unknown, tracking: boolean): SearchPr
   }
 }
 
-export function readPreferences(tracking: boolean): SearchPreferences {
+export function readPreferences(tracking: boolean, persistent = true): SearchPreferences {
+  if (!persistent) return validatePreferences(null, tracking)
   try {
     return validatePreferences(
       JSON.parse(
@@ -43,7 +44,12 @@ export function readPreferences(tracking: boolean): SearchPreferences {
   }
 }
 
-export function savePreferences(value: SearchPreferences, tracking: boolean): void {
+export function savePreferences(
+  value: SearchPreferences,
+  tracking: boolean,
+  persistent = true,
+): void {
+  if (!persistent) return
   try {
     localStorage.setItem(
       tracking ? 'jobtrail.applications' : 'jobtrail.search',

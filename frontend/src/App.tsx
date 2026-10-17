@@ -15,12 +15,12 @@ import {
   UserRound,
 } from 'lucide-react'
 import { ApiError, api, readCookie } from './api'
-import { ErrorNotice } from './components'
+import { ErrorNotice, Loading } from './components'
 import { formatDateTime } from './domain'
 import { Jobs } from './Jobs'
 import { Sources } from './Sources'
 import { ProfileEditor } from './Profile'
-import type { RefreshRun, Source } from './types'
+import type { RefreshRun, Session, Source } from './types'
 
 type View = 'jobs' | 'applications' | 'sources' | 'profile'
 const navigation = [
@@ -40,8 +40,23 @@ export default function App() {
   const [refreshError, setRefreshError] = useState<unknown>(null)
   const [revision, setRevision] = useState(0)
   const [hideRun, setHideRun] = useState(false)
-  const [authenticationEnabled, setAuthenticationEnabled] = useState(false)
+  const [session, setSession] = useState<Session | null>(null)
+  const [sessionError, setSessionError] = useState<unknown>(null)
+  const demo = session?.demo === true
   const running = refreshPending || run?.status === 'RUNNING'
+
+  const loadSession = useCallback(async () => {
+    setSessionError(null)
+    try {
+      setSession(await api<Session>('/api/session'))
+    } catch (error) {
+      setSessionError(error)
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadSession()
+  }, [loadSession])
 
   const loadSources = useCallback(async () => {
     try {
@@ -55,9 +70,11 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (!session) return
     void loadSources()
-  }, [loadSources])
+  }, [loadSources, session])
   useEffect(() => {
+    if (!session || demo) return
     api<RefreshRun | undefined>('/api/refresh/latest')
       .then((previous) => {
         if (previous) setRun(previous)
@@ -65,12 +82,10 @@ export default function App() {
       .catch((error) => {
         if (!(error instanceof ApiError && error.status === 404)) setRefreshError(error)
       })
-    api<{ authenticationEnabled: boolean }>('/api/session')
-      .then((session) => setAuthenticationEnabled(session.authenticationEnabled))
-      .catch(() => {})
-  }, [])
+  }, [session, demo])
 
   const refresh = async () => {
+    if (!session || demo) return
     setRefreshError(null)
     setRefreshPending(true)
     setHideRun(false)
@@ -89,7 +104,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!run || run.status !== 'RUNNING') return
+    if (demo || !run || run.status !== 'RUNNING') return
     let cancelled = false
     let timer: ReturnType<typeof setTimeout>
     const poll = async () => {
@@ -112,7 +127,7 @@ export default function App() {
       cancelled = true
       clearTimeout(timer)
     }
-  }, [run?.id, run?.status, loadSources])
+  }, [run?.id, run?.status, loadSources, demo])
 
   const activeSources = sources.filter((source) => source.enabled).length
   const latestRefresh = sources
@@ -121,6 +136,21 @@ export default function App() {
     .sort()
     .at(-1)
   const currentNav = navigation.find((item) => item.id === view)!
+
+  if (!session) {
+    return (
+      <main className="session-loading">
+        <div className="brand">
+          <Route size={25} /> JobTrail<span className="brand-dot">.</span>
+        </div>
+        {sessionError ? (
+          <ErrorNotice error={sessionError} retry={() => void loadSession()} />
+        ) : (
+          <Loading label="Opening your workspace…" />
+        )}
+      </main>
+    )
+  }
 
   return (
     <div className="app-shell">
@@ -142,7 +172,7 @@ export default function App() {
           </span>
           JobTrail<span className="brand-dot">.</span>
         </a>
-        <div className="sidebar-section-label">YOUR WORKSPACE</div>
+        <div className="sidebar-section-label">{demo ? 'DEMO WORKSPACE' : 'YOUR WORKSPACE'}</div>
         <nav aria-label="Main navigation">
           {navigation.map((item) => (
             <button
@@ -152,7 +182,7 @@ export default function App() {
               onClick={() => setView(item.id)}
             >
               <item.icon size={20} />
-              <span>{item.label}</span>
+              <span>{demo && item.id === 'profile' ? 'Demo profile' : item.label}</span>
               {view === item.id && <ChevronRight size={16} className="nav-chevron" />}
             </button>
           ))}
@@ -171,7 +201,7 @@ export default function App() {
           </div>
           <div className="workspace-label">
             <span className="status-dot" />
-            Personal workspace
+            {demo ? 'Temporary demo workspace' : 'Personal workspace'}
           </div>
         </div>
       </aside>
@@ -179,9 +209,10 @@ export default function App() {
       <div className="main-shell">
         <header className="topbar">
           <div className="breadcrumb">
-            Workspace <ChevronRight size={14} /> <span>{currentNav.label}</span>
+            {demo ? 'Demo' : 'Workspace'} <ChevronRight size={14} />{' '}
+            <span>{demo && view === 'profile' ? 'Demo profile' : currentNav.label}</span>
           </div>
-          {authenticationEnabled ? (
+          {session.authenticationEnabled ? (
             <form action="/logout" method="post">
               <input type="hidden" name="_csrf" value={readCookie('XSRF-TOKEN') || ''} />
               <button className="text-button">
@@ -197,6 +228,15 @@ export default function App() {
           )}
         </header>
         <main id="main-content" tabIndex={-1}>
+          {demo && (
+            <div className="demo-banner" role="note">
+              <Compass size={20} aria-hidden="true" />
+              <p>
+                <strong>Temporary demo</strong> · Fictional profile. Changes are not permanent and
+                reset when you sign out or after 30 minutes of inactivity.
+              </p>
+            </div>
+          )}
           <div className="page-heading">
             <div>
               <div className="eyebrow">
@@ -214,20 +254,28 @@ export default function App() {
                   : view === 'sources'
                     ? 'Go straight to the source.'
                     : view === 'profile'
-                      ? 'Your experience. In your words.'
+                      ? demo
+                        ? 'Explore a fictional profile.'
+                        : 'Your experience. In your words.'
                       : 'Every opportunity, in view.'}
               </h1>
               <p>
                 {view === 'jobs'
                   ? 'Search tracked employer boards. Find roles worth your time.'
                   : view === 'sources'
-                    ? 'Build a watchlist of employer boards to search and refresh.'
+                    ? demo
+                      ? 'Browse the shared employer boards used in this demo.'
+                      : 'Build a watchlist of employer boards to search and refresh.'
                     : view === 'profile'
-                      ? 'Add real skills and confirmed facts for evidence-based job matching.'
-                      : 'Save interesting roles and track the applications you submit.'}
+                      ? demo
+                        ? 'Edit example skills and career facts to see how matching changes. Use fictional details only.'
+                        : 'Add real skills and confirmed facts for evidence-based job matching.'
+                      : demo
+                        ? 'Try saving roles and updating their status in a temporary tracker. No applications are submitted.'
+                        : 'Save interesting roles and track the applications you submit.'}
               </p>
             </div>
-            {view !== 'profile' && (
+            {view !== 'profile' && !demo && (
               <button
                 className="button button-primary refresh-button"
                 onClick={() => void refresh()}
@@ -240,7 +288,7 @@ export default function App() {
           </div>
           <ErrorNotice error={sourceError} retry={() => void loadSources()} />
           <ErrorNotice error={refreshError} />
-          {run && !hideRun && (
+          {!demo && run && !hideRun && (
             <div
               className={`refresh-notice ${run.status === 'FAILED' || run.status === 'PARTIAL' ? 'refresh-warning' : ''}`}
               role="status"
@@ -311,7 +359,7 @@ export default function App() {
                   <span>Last refreshed {latestRefresh ? formatDateTime(latestRefresh) : '—'}</span>
                 </div>
                 <button className="text-button" onClick={() => setView('sources')}>
-                  Manage coverage <ArrowUpRight size={14} />
+                  {demo ? 'View coverage' : 'Manage coverage'} <ArrowUpRight size={14} />
                 </button>
               </div>
               <Jobs
@@ -319,6 +367,7 @@ export default function App() {
                 sources={sources}
                 revision={revision}
                 tracking={view === 'applications'}
+                demo={demo}
                 onManageSources={() => setView('sources')}
                 onEditProfile={() => setView('profile')}
               />
@@ -332,10 +381,11 @@ export default function App() {
               onChange={loadSources}
               onRefresh={() => void refresh()}
               refreshing={!!running}
+              readOnly={demo}
             />
           )}
           <div hidden={view !== 'profile'}>
-            <ProfileEditor />
+            <ProfileEditor demo={demo} />
           </div>
           <footer className="page-footer">
             <span>JobTrail</span>

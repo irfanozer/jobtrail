@@ -4,14 +4,15 @@ Checked on 2026-10-17 UTC. Live board totals describe a snapshot and will change
 
 ## Automated checks
 
-- 124 backend tests passed, including source parsing, complete pagination, transactional rollback, duplicate prevention, concurrent status preservation, search, profile conflicts, matching, login and CSRF.
-- 5 frontend tests passed; production build and formatting checks passed.
+- 129 backend tests passed, including source parsing, complete pagination, transactional rollback, duplicate prevention, concurrent status preservation, search, profile conflicts, matching, login and CSRF.
+- Five demo integration tests verify separate visitor sessions, owner-data isolation, status filtering and pagination, rejected owner-only actions, profile conflicts, real cookie/header CSRF requests, and reset after sign-out.
+- 6 frontend tests passed; production build and formatting checks passed, including isolation from the owner's saved browser preferences.
 - GitHub Actions also verified the packaged UI and PostgreSQL persistence across an app restart.
 - The production Docker image built with Java 21 and ran with a 512 MiB application memory limit.
 
 ## Hosted checks
 
-[Hosted JobTrail](https://jobtrail-bwgi.onrender.com) requires owner login.
+The initial [hosted JobTrail](https://jobtrail-bwgi.onrender.com) checks below used the private owner workspace. Public demo checks are recorded separately when deployed.
 
 - `/actuator/health` returned HTTP 200 with status `UP`.
 - Unauthenticated profile and jobs API requests returned HTTP 401; the home page redirected to `/login`. Owner sign-in succeeded in the browser.
@@ -23,6 +24,7 @@ Checked on 2026-10-17 UTC. Live board totals describe a snapshot and will change
 
 ## Live local checks
 
+- A separate Java 21 production container ran the new login and demo UI with a 512 MiB memory limit and disposable in-memory data. In the browser, a fictional profile edit survived reload, sign-out returned to login, and a new demo restored the original fictional profile. This check did not use the owner's local database.
 - The application and PostgreSQL containers became healthy using the documented Windows startup script.
 - All 13 enabled employer boards completed a real refresh successfully.
 - 3,274 postings were stored, with exactly 3,274 distinct source/posting-ID pairs after a repeated refresh.

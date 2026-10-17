@@ -22,6 +22,7 @@ export function Sources({
   onChange,
   onRefresh,
   refreshing,
+  readOnly = false,
 }: {
   sources: Source[]
   loaded: boolean
@@ -29,6 +30,7 @@ export function Sources({
   onChange: () => Promise<void>
   onRefresh: () => void
   refreshing: boolean
+  readOnly?: boolean
 }) {
   const [name, setName] = useState('')
   const [provider, setProvider] = useState<Provider>('GREENHOUSE')
@@ -40,6 +42,7 @@ export function Sources({
 
   const addSource = async (event: FormEvent) => {
     event.preventDefault()
+    if (readOnly) return
     setSaving(true)
     setError(null)
     setSuccess('')
@@ -60,6 +63,7 @@ export function Sources({
   }
 
   const toggle = async (source: Source) => {
+    if (readOnly) return
     setError(null)
     setSuccess('')
     setPendingIds((previous) => [...previous, source.id])
@@ -81,12 +85,13 @@ export function Sources({
     <div className="sources-layout">
       <section className="sources-main" aria-label="Tracked employer boards">
         <div className="section-title">
-          <h2>Your employer boards</h2>
+          <h2>{readOnly ? 'Shared employer boards' : 'Your employer boards'}</h2>
           <span className="count-pill">{loaded ? sources.length : '—'}</span>
         </div>
         <p className="section-description">
-          Each board belongs to one employer. Paused boards stay in your workspace and are skipped
-          during refresh.
+          {readOnly
+            ? 'Each board belongs to one employer. The demo uses a shared catalog; adding, pausing, and refreshing boards is available in the owner workspace.'
+            : 'Each board belongs to one employer. Paused boards stay in your workspace and are skipped during refresh.'}
         </p>
         <ErrorNotice error={error} />
         {success && (
@@ -104,8 +109,9 @@ export function Sources({
         ) : sources.length === 0 ? (
           <div className="surface">
             <EmptyState title="Choose where to look first.">
-              Add an employer’s Greenhouse or Lever board using the form. Then refresh to collect
-              its available roles.
+              {readOnly
+                ? 'There are no employer boards in the shared catalog yet. Please try the demo again later.'
+                : 'Add an employer’s Greenhouse or Lever board using the form. Then refresh to collect its available roles.'}
             </EmptyState>
           </div>
         ) : (
@@ -132,7 +138,7 @@ export function Sources({
                       aria-label={`Enable ${source.name}`}
                       checked={source.enabled}
                       onChange={() => void toggle(source)}
-                      disabled={pendingIds.includes(source.id)}
+                      disabled={readOnly || pendingIds.includes(source.id)}
                     />
                     <span className="toggle-track" />
                     <span className="toggle-caption">{source.enabled ? 'Active' : 'Paused'}</span>
@@ -181,79 +187,95 @@ export function Sources({
         )}
       </section>
       <aside className="source-add-panel">
-        <form className="surface add-source-form" onSubmit={(event) => void addSource(event)}>
-          <span className="form-kicker">
-            <Plus size={17} />
-            EXPAND YOUR SEARCH
-          </span>
-          <h2>Add an employer board</h2>
-          <p>Track a company’s official listings from a supported hiring platform.</p>
-          <label className="field">
-            <span>Employer name</span>
-            <input
-              required
-              maxLength={100}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Company name"
-            />
-          </label>
-          <label className="field">
-            <span>Hiring platform</span>
-            <select
-              value={provider}
-              onChange={(event) => setProvider(event.target.value as Provider)}
+        {readOnly ? (
+          <section className="surface add-source-form">
+            <span className="form-kicker">
+              <Layers3 size={17} /> SHARED CATALOG
+            </span>
+            <h2>Explore the current coverage</h2>
+            <p>
+              Search these listings, try the filters, and save roles to your temporary tracker.
+              Employer board settings and collection runs are managed by the owner.
+            </p>
+          </section>
+        ) : (
+          <form className="surface add-source-form" onSubmit={(event) => void addSource(event)}>
+            <span className="form-kicker">
+              <Plus size={17} />
+              EXPAND YOUR SEARCH
+            </span>
+            <h2>Add an employer board</h2>
+            <p>Track a company’s official listings from a supported hiring platform.</p>
+            <label className="field">
+              <span>Employer name</span>
+              <input
+                required
+                maxLength={100}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Company name"
+              />
+            </label>
+            <label className="field">
+              <span>Hiring platform</span>
+              <select
+                value={provider}
+                onChange={(event) => setProvider(event.target.value as Provider)}
+              >
+                <option value="GREENHOUSE">Greenhouse</option>
+                <option value="LEVER">Lever</option>
+              </select>
+            </label>
+            <label className="field">
+              <span>Board key</span>
+              <input
+                required
+                value={boardKey}
+                onChange={(event) => setBoardKey(event.target.value)}
+                pattern="[A-Za-z0-9_-]+"
+                title="Enter the employer’s board key using letters, numbers, hyphens, or underscores."
+                maxLength={100}
+                placeholder="employer-board-key"
+                autoCapitalize="none"
+                spellCheck={false}
+              />
+              <small>Use the employer’s board identifier, not the full URL.</small>
+            </label>
+            <div className="url-example">
+              <span>Find it at the end of the board URL</span>
+              <code>
+                {provider === 'GREENHOUSE' ? 'boards.greenhouse.io/' : 'jobs.lever.co/'}
+                <strong>board-key</strong>
+              </code>
+            </div>
+            <button
+              className="button button-primary full-width"
+              disabled={saving || !name.trim() || !boardKey.trim()}
             >
-              <option value="GREENHOUSE">Greenhouse</option>
-              <option value="LEVER">Lever</option>
-            </select>
-          </label>
-          <label className="field">
-            <span>Board key</span>
-            <input
-              required
-              value={boardKey}
-              onChange={(event) => setBoardKey(event.target.value)}
-              pattern="[A-Za-z0-9_-]+"
-              title="Enter the employer’s board key using letters, numbers, hyphens, or underscores."
-              maxLength={100}
-              placeholder="employer-board-key"
-              autoCapitalize="none"
-              spellCheck={false}
-            />
-            <small>Use the employer’s board identifier, not the full URL.</small>
-          </label>
-          <div className="url-example">
-            <span>Find it at the end of the board URL</span>
-            <code>
-              {provider === 'GREENHOUSE' ? 'boards.greenhouse.io/' : 'jobs.lever.co/'}
-              <strong>board-key</strong>
-            </code>
-          </div>
-          <button
-            className="button button-primary full-width"
-            disabled={saving || !name.trim() || !boardKey.trim()}
-          >
-            {saving ? <LoaderCircle size={16} className="spin" /> : <Plus size={17} />}
-            {saving ? 'Adding board…' : 'Add employer board'}
-          </button>
-        </form>
+              {saving ? <LoaderCircle size={16} className="spin" /> : <Plus size={17} />}
+              {saving ? 'Adding board…' : 'Add employer board'}
+            </button>
+          </form>
+        )}
         <div className="source-help">
           <CircleHelp size={18} />
           <div>
             <strong>Know what your search covers.</strong>
             <p>
-              JobTrail searches the boards you add. It does not search every employer or job site.
-              Add more boards as your target list grows.
+              {readOnly
+                ? 'JobTrail searches the employer boards listed here. It does not search every employer or job site.'
+                : 'JobTrail searches the boards you add. It does not search every employer or job site. Add more boards as your target list grows.'}
             </p>
-            <button
-              className="text-button"
-              onClick={onRefresh}
-              disabled={refreshing || !sources.some((source) => source.enabled)}
-            >
-              Refresh active boards
-              <ExternalLink size={13} />
-            </button>
+            {!readOnly && (
+              <button
+                className="text-button"
+                onClick={onRefresh}
+                disabled={refreshing || !sources.some((source) => source.enabled)}
+              >
+                Refresh active boards
+                <ExternalLink size={13} />
+              </button>
+            )}
           </div>
         </div>
       </aside>

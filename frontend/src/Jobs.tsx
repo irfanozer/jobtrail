@@ -48,12 +48,20 @@ interface JobsProps {
   sources: Source[]
   revision: number
   tracking: boolean
+  demo?: boolean
   onManageSources: () => void
   onEditProfile: () => void
 }
 
-export function Jobs({ sources, revision, tracking, onManageSources, onEditProfile }: JobsProps) {
-  const [initial] = useState(() => readPreferences(tracking))
+export function Jobs({
+  sources,
+  revision,
+  tracking,
+  demo = false,
+  onManageSources,
+  onEditProfile,
+}: JobsProps) {
+  const [initial] = useState(() => readPreferences(tracking, !demo))
   const [search, setSearch] = useState(initial.search)
   const [query, setQuery] = useState(initial.search)
   const [level, setLevel] = useState(initial.level)
@@ -73,8 +81,12 @@ export function Jobs({ sources, revision, tracking, onManageSources, onEditProfi
   const [announcement, setAnnouncement] = useState('')
 
   useEffect(() => {
-    savePreferences({ search, level, workplace, status, sourceId, sort, engineeringOnly }, tracking)
-  }, [search, level, workplace, status, sourceId, sort, engineeringOnly, tracking])
+    savePreferences(
+      { search, level, workplace, status, sourceId, sort, engineeringOnly },
+      tracking,
+      !demo,
+    )
+  }, [search, level, workplace, status, sourceId, sort, engineeringOnly, tracking, demo])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -310,7 +322,9 @@ export function Jobs({ sources, revision, tracking, onManageSources, onEditProfi
           <h2>
             {tracking
               ? status === 'APPLIED'
-                ? 'Applications submitted'
+                ? demo
+                  ? 'Demo application tracker'
+                  : 'Applications submitted'
                 : status === 'HIDDEN'
                   ? 'Hidden roles'
                   : 'Your shortlist'
@@ -341,7 +355,9 @@ export function Jobs({ sources, revision, tracking, onManageSources, onEditProfi
       </div>
       {!tracking && (
         <p className="results-note">
-          Results come from your tracked boards. Add an employer board to broaden your search.
+          {demo
+            ? 'Results come from the shared employer catalog. Filters and tracking changes stay in this temporary demo.'
+            : 'Results come from your tracked boards. Add an employer board to broaden your search.'}
         </p>
       )}
       <ErrorNotice error={error} retry={() => setReload((value) => value + 1)} />
@@ -377,13 +393,17 @@ export function Jobs({ sources, revision, tracking, onManageSources, onEditProfi
           >
             {tracking
               ? status === 'APPLIED'
-                ? 'After you submit an application on an employer’s site, mark the role as applied to keep track of it here.'
+                ? demo
+                  ? 'Open a role and try Mark as applied to explore the tracker. This only changes its temporary status; no application is submitted.'
+                  : 'After you submit an application on an employer’s site, mark the role as applied to keep track of it here.'
                 : status === 'HIDDEN'
                   ? 'Roles you hide will appear here, so you can revisit them later.'
                   : 'Save roles from Discover jobs to collect the opportunities you want to explore.'
               : hasFilters
                 ? 'Try a broader title, another experience level, or fewer filters.'
-                : 'Add employer boards, then refresh them to bring real job listings into your workspace.'}
+                : demo
+                  ? 'The shared catalog has no matching listings right now. Try again after the owner refreshes the employer boards.'
+                  : 'Add employer boards, then refresh them to bring real job listings into your workspace.'}
             {!tracking && (
               <span className="empty-coverage">
                 This search covers tracked employer boards, not the entire web.
@@ -402,7 +422,7 @@ export function Jobs({ sources, revision, tracking, onManageSources, onEditProfi
           )}
           <button className="button button-primary" onClick={onManageSources}>
             <Layers3 size={16} />
-            Manage employer boards
+            {demo ? 'View employer boards' : 'Manage employer boards'}
           </button>
         </div>
       )}
@@ -437,6 +457,7 @@ export function Jobs({ sources, revision, tracking, onManageSources, onEditProfi
           onClose={() => setSelectedId(null)}
           onStatus={changeStatus}
           onEditProfile={onEditProfile}
+          demo={demo}
         />
       )}
     </section>
@@ -525,11 +546,13 @@ function JobDetails({
   onClose,
   onStatus,
   onEditProfile,
+  demo,
 }: {
   jobId: number
   onClose: () => void
   onStatus: (job: Job, status: JobStatus) => Promise<boolean>
   onEditProfile: () => void
+  demo: boolean
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const [job, setJob] = useState<Job | null>(null)
@@ -599,6 +622,14 @@ function JobDetails({
             <X size={21} />
           </button>
         </div>
+        {demo && (
+          <div className="demo-banner" role="note">
+            <p>
+              <strong>Temporary demo</strong> · Matches use a fictional profile. Tracking changes
+              reset when you sign out or after 30 minutes of inactivity.
+            </p>
+          </div>
+        )}
         <ErrorNotice error={error} retry={() => setReload((value) => value + 1)} />
         {!job && !error && <Loading label="Loading role details…" />}
         {job && (
@@ -717,14 +748,18 @@ function JobDetails({
                     onEditProfile()
                   }}
                 >
-                  Edit my profile
+                  {demo ? 'Edit demo profile' : 'Edit my profile'}
                   <ArrowUpRight size={15} />
                 </button>
               </div>
             )}
             <div className="application-status-panel">
               <h3>Keep your progress up to date</h3>
-              <p>Mark a role as applied after you submit on the employer’s site.</p>
+              <p>
+                {demo
+                  ? 'Try changing the status in this temporary tracker. No application is submitted.'
+                  : 'Mark a role as applied after you submit on the employer’s site.'}
+              </p>
               <div>
                 <button
                   className={`button ${job.status === 'APPLIED' ? 'button-success' : 'button-secondary'}`}

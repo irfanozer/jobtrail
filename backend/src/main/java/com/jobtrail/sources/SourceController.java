@@ -1,5 +1,6 @@
 package com.jobtrail.sources;
 
+import com.jobtrail.demo.DemoWorkspace;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,7 +20,15 @@ public class SourceController {
     public SourceController(JobSourceRepository repository) { this.repository = repository; }
 
     @GetMapping
-    public List<SourceView> list() { return repository.findAllByOrderByNameAsc().stream().map(SourceView::from).toList(); }
+    public List<SourceView> list(Authentication authentication) {
+        return repository.findAllByOrderByNameAsc().stream().map(SourceView::from)
+                .map(source -> DemoWorkspace.isDemo(authentication)
+                        ? new SourceView(source.id(), source.name(), source.provider(), source.boardKey(), source.enabled(),
+                                source.lastSuccessAt(), source.lastAttemptAt(),
+                                source.lastError() == null ? null : "This board could not be refreshed. Please try another board.",
+                                source.jobCount()) : source)
+                .toList();
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

@@ -65,7 +65,7 @@ public class ProfileService {
         }
     }
 
-    static ProfileRequest normalize(ProfileRequest request) {
+    public static ProfileRequest normalize(ProfileRequest request) {
         List<String> locations = uniqueTrimmed(request.preferredLocations());
         List<String> skills = uniqueTrimmed(request.skills());
         List<String> roles = uniqueTrimmed(request.targetRoles());

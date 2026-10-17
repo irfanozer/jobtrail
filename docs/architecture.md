@@ -1,6 +1,6 @@
 # Architecture and tradeoffs
 
-JobTrail is a single-user workspace. A React client talks to a Spring Boot API; PostgreSQL stores all durable state. The production container serves both the compiled client and API on one port, avoiding separate hosting and cross-origin authentication.
+JobTrail has one persistent owner workspace and isolated temporary demo sessions. A React client talks to a Spring Boot API; PostgreSQL stores all durable state. The production container serves both the compiled client and API on one port, avoiding separate hosting and cross-origin authentication.
 
 ```mermaid
 flowchart LR
@@ -35,7 +35,15 @@ No personal profile ships in source control. Users enter or privately import ski
 
 Local development binds to loopback. Docker exposes only localhost:8080 and does not expose PostgreSQL. The hosted `deploy` profile requires a database URL and password, a strong owner password, form login, secure session cookies and CSRF protection. The frontend sends the CSRF cookie value in its request header. Health is public; career data and job APIs require login. Passwords are hashed in memory and supplied through environment secrets.
 
-The hosted app is private even though the code is public. It has one owner account, not multi-user isolation. Changing the owner password requires a restart. Sessions are in memory, so restarts require signing in again; career data stays in PostgreSQL.
+The owner's profile and application history remain private. Changing the owner password requires a restart. Sessions are in memory, so restarts require signing in again; owner career data stays in PostgreSQL.
+
+## Temporary portfolio demo
+
+A CSRF-protected `POST /demo` creates a fresh session with only the `DEMO` role. It invalidates any prior session, persists the new security context, and rotates the CSRF token. Each session starts with a clearly fictional profile and empty tracking map. It expires after 30 minutes of inactivity; logout and service restart also discard it. No public demo password or persistent visitor account is needed.
+
+The job catalog is shared public data, but demo tracking never uses the owner's `jobs.status` values. Search replaces status predicates with visitor-specific job-ID predicates before database pagination and counts, then overlays every result's displayed status. Profile and match routes use the fictional session profile; edits retain validation and optimistic version checks. Demo state never writes to the profile or job repositories, and tracking is capped at 500 jobs per session.
+
+An explicit API allowlist permits only job browsing, matching, temporary profile edits and tracking, read-only source summaries, and session information for demo visitors. Source changes, collection runs, and other API routes require the owner role. Browser search preferences are held in memory for the demo and do not read or overwrite owner preferences in local storage.
 
 ## Future milestones
 

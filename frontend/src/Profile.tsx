@@ -19,7 +19,7 @@ import { ErrorNotice, Loading } from './components'
 import { formatDateTime, listFromText } from './domain'
 import type { CareerFact, Profile } from './types'
 
-export function ProfileEditor() {
+export function ProfileEditor({ demo = false }: { demo?: boolean }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [skills, setSkills] = useState('')
   const [roles, setRoles] = useState('')
@@ -50,13 +50,13 @@ export function ProfileEditor() {
     void load()
   }, [load])
   useEffect(() => {
-    if (!dirty) return
+    if (!dirty || demo) return
     const warn = (event: BeforeUnloadEvent) => {
       event.preventDefault()
     }
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
-  }, [dirty])
+  }, [dirty, demo])
 
   const changed = () => {
     setSuccess(false)
@@ -146,7 +146,11 @@ export function ProfileEditor() {
         {success && (
           <div className="notice notice-success" role="status">
             <CheckCircle2 size={18} />
-            <p>Your profile is saved. Open a role to check its match against your experience.</p>
+            <p>
+              {demo
+                ? 'Example profile saved for this demo session. Open a role to see its updated match.'
+                : 'Your profile is saved. Open a role to check its match against your experience.'}
+            </p>
           </div>
         )}
         <section className="surface profile-section">
@@ -156,7 +160,11 @@ export function ProfileEditor() {
             </span>
             <div>
               <h2>The basics</h2>
-              <p>A little context for a more relevant search.</p>
+              <p>
+                {demo
+                  ? 'A fictional example you can edit for this session.'
+                  : 'A little context for a more relevant search.'}
+              </p>
             </div>
           </div>
           <label className="field">
@@ -170,8 +178,8 @@ export function ProfileEditor() {
                 setProfile({ ...profile, displayName: event.target.value })
               }}
               maxLength={120}
-              placeholder="Your name"
-              autoComplete="name"
+              placeholder={demo ? 'Fictional display name' : 'Your name'}
+              autoComplete={demo ? 'off' : 'name'}
             />
           </label>
           <label className="field">
@@ -251,8 +259,9 @@ export function ProfileEditor() {
           <div className="facts-guidance">
             <ShieldCheck size={18} />
             <p>
-              Use specific, truthful statements from your resume, projects, or work history. Only
-              facts you confirm contribute to matching.
+              {demo
+                ? 'Use fictional example statements only. Confirm an example fact to include it in this session’s matching results. Do not enter personal information.'
+                : 'Use specific, truthful statements from your resume, projects, or work history. Only facts you confirm contribute to matching.'}
             </p>
           </div>
           {profile.careerFacts.length === 0 && (
@@ -295,7 +304,11 @@ export function ProfileEditor() {
                     onChange={(event) =>
                       changeFact(fact.id, { statement: event.target.value, confirmed: false })
                     }
-                    placeholder="Describe a real responsibility, project, or achievement."
+                    placeholder={
+                      demo
+                        ? 'Describe a fictional project or responsibility.'
+                        : 'Describe a real responsibility, project, or achievement.'
+                    }
                   />
                 </label>
                 <label className="field">
@@ -317,7 +330,11 @@ export function ProfileEditor() {
                     checked={fact.confirmed}
                     onChange={(event) => changeFact(fact.id, { confirmed: event.target.checked })}
                   />
-                  <span>I confirm this statement is accurate.</span>
+                  <span>
+                    {demo
+                      ? 'Include this fictional example in matching.'
+                      : 'I confirm this statement is accurate.'}
+                  </span>
                   {fact.confirmed && <Check size={15} />}
                 </label>
               </div>
@@ -342,7 +359,7 @@ export function ProfileEditor() {
           </span>
           <button className="button button-primary" disabled={saving}>
             {saving ? <LoaderCircle size={17} className="spin" /> : <Save size={17} />}
-            {saving ? 'Saving…' : 'Save profile'}
+            {saving ? 'Saving…' : demo ? 'Save for this session' : 'Save profile'}
           </button>
         </div>
       </div>
@@ -351,11 +368,18 @@ export function ProfileEditor() {
           <div className="principle-icon">
             <ShieldCheck size={28} />
           </div>
-          <span className="eyebrow">GROUNDED IN YOUR EXPERIENCE</span>
-          <h2>Good matches start with honest facts.</h2>
+          <span className="eyebrow">
+            {demo ? 'TRY PROFILE MATCHING' : 'GROUNDED IN YOUR EXPERIENCE'}
+          </span>
+          <h2>
+            {demo
+              ? 'See how the evidence changes a match.'
+              : 'Good matches start with honest facts.'}
+          </h2>
           <p>
-            Your profile connects job requirements to experience you can support. Missing
-            information stays unknown.
+            {demo
+              ? 'This fictional profile lets you explore rules-based matching. Change its skills or example facts, save, and reopen a role to compare the explanation.'
+              : 'Your profile connects job requirements to experience you can support. Missing information stays unknown.'}
           </p>
           <div className="profile-stat">
             <span>Skills entered</span>
@@ -381,8 +405,9 @@ export function ProfileEditor() {
         <div className="privacy-note">
           <ShieldCheck size={15} />
           <p>
-            Your profile belongs in your private workspace. Avoid storing passwords, government
-            identifiers, or other unrelated sensitive details.
+            {demo
+              ? 'Use fictional details only. Demo edits are temporary and are cleared when you sign out or your session expires.'
+              : 'Your profile belongs in your private workspace. Avoid storing passwords, government identifiers, or other unrelated sensitive details.'}
           </p>
         </div>
       </aside>

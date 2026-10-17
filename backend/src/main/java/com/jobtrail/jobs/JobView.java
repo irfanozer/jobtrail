@@ -9,5 +9,10 @@ public record JobView(Long id, Long sourceId, String sourceName, String company,
             job.getDescription(), job.getPublishedAt(), job.getFirstSeenAt(), job.getLastSeenAt(),
             job.getActive(), JobClassifier.priority(job));
     }
+
+    public JobView withStatus(TrackingStatus trackingStatus) {
+        return new JobView(id, sourceId, sourceName, company, title, location, workplace, level,
+                trackingStatus, url, description, publishedAt, firstSeenAt, lastSeenAt, active, priorityScore);
+    }
 }
 

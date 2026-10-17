@@ -2,7 +2,7 @@
 
 A reusable job-search workspace built with Java 21, Spring Boot, PostgreSQL, React, and TypeScript. Find real listings on official employer boards, compare them with your career facts, and keep your shortlist and application history in one place.
 
-Hosted app: [Open JobTrail](https://jobtrail-bwgi.onrender.com). Owner login is required.
+Hosted app: [Open JobTrail](https://jobtrail-bwgi.onrender.com/login). Choose **Try temporary demo** to explore with a fictional profile, or sign in to the private owner workspace.
 
 ![JobTrail dashboard showing live employer listings](docs/images/dashboard.jpg)
 
@@ -14,10 +14,19 @@ Hosted app: [Open JobTrail](https://jobtrail-bwgi.onrender.com). Owner login is 
 - A private profile with skills, sourced career facts, and evidence-based match explanations.
 - Persisted refresh progress and browser search preferences.
 - One-container web application, durable PostgreSQL storage, hosted login, tests and CI.
+- A temporary public demo with a fictional profile and isolated, session-only tracking.
 
 The initial board list is a starting point, not a search of the whole internet. Add employer board keys to expand coverage. Default ranking favors junior/mid-level engineering roles, remote work, and the Washington/DC region; all locations remain searchable. Unknown seniority and work arrangements stay labeled unknown.
 
 Current matching uses deterministic rules. NVIDIA model integration, tailored resume generation, and reviewed application assistance are later milestones. This version does not submit applications or require an API key.
+
+## Try the temporary demo
+
+Open the hosted login page and choose **Try temporary demo**. No account or password is needed. You can search collected employer listings, inspect match explanations, edit the fictional profile, and save, hide, or manually mark roles applied.
+
+**Demo changes are not permanent.** They stay only in your server session and reset when you sign out, after 30 minutes of inactivity, or when the service restarts. Demo filters do not read or change the owner's saved browser preferences. Use fictional information when trying the profile editor.
+
+Each visitor gets separate demo state. The demo never exposes the owner's profile or application history and never writes profile or tracking changes to PostgreSQL. Employer boards are read-only and collection is controlled by the owner. Marking a role applied only exercises the tracker; no application is submitted.
 
 ## Start on Windows
 
@@ -106,4 +115,4 @@ The automated suite covers provider parsing/pagination, failed snapshot rollback
 - [API reference](docs/api.md)
 - [Verification record](docs/verification.md)
 
-Run a single application instance. Public source code does not make personal career data public: the hosted app is an owner-only workspace. Use screenshots without profile details when sharing the project.
+Run a single application instance. The owner workspace stays private; public demo sessions share only the public job catalog. Use screenshots without personal profile details when sharing the project.

@@ -56,6 +56,12 @@ export interface RefreshRun {
   }>
 }
 
+export interface Session {
+  authenticationEnabled: boolean
+  demo: boolean
+  demoAvailable: boolean
+}
+
 export interface CareerFact {
   id: string
   statement: string
